@@ -20,6 +20,10 @@ struct BankClerk {
         print("\(customer.number) \(Constant.depositEndText)")
     }
     
+    func loanWork(customer: Customer) {
+        print("\(customer.number) \(Constant.loanStartText)")
+        Thread.sleep(forTimeInterval: Constant.loanWorkTime)
+        print("\(customer.number) \(Constant.loanEndText)")
     }
 }
 
