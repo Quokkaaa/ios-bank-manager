@@ -31,7 +31,7 @@ struct Bank {
                 return
             }
             
-            bankClerk.work(customer: customer)
+            bankClerk.depositWork(customer: customer)
             totalCustomerCount += 1
         }
     }
