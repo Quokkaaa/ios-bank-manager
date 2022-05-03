@@ -9,12 +9,13 @@ struct Bank {
     private enum Constant {
         static let customerRange = 1...Int.random(in: 10...30)
         static let empty = ""
-        static let depositClerkCount = 2
-        static let loanClerkCount = 1
     }
     private var customerQueue = Queue<Customer>()
     private var totalCustomerCount = Int.zero
     private var workingTime = Constant.empty
+    
+    private let depositSemaphore = DispatchSemaphore(value: Task.deposit.clerkCount)
+    private let loanSemaphore = DispatchSemaphore(value: Task.loan.clerkCount)
     
     private mutating func receiveCustomer() {
         for number in Constant.customerRange {
@@ -27,31 +28,32 @@ struct Bank {
     
     private mutating func sendCustomerToClerk() {
         let group = DispatchGroup()
-        let depositSemaphore = DispatchSemaphore(value: Constant.depositClerkCount)
-        let loanSemaphore = DispatchSemaphore(value: Constant.loanClerkCount)
         while !customerQueue.isEmpty {
             
             guard let customer = customerQueue.dequeue() else {
                 return
             }
-            
-            switch customer.task {
-            case .deposit:
-                DispatchQueue.global().async(group: group) {
-                    depositSemaphore.wait()
-                    BankClerk.depositWork(customer: customer)
-                    depositSemaphore.signal()
-                }
-            case .loan:
-                DispatchQueue.global().async(group: group) {
-                    loanSemaphore.wait()
-                    BankClerk.loanWork(customer: customer)
-                    loanSemaphore.signal()
-                }
-            }
+            matchToClerk(customer: customer, group: group)
             totalCustomerCount += 1
         }
         group.wait()
+    }
+    
+    private func matchToClerk(customer: Customer, group: DispatchGroup) {
+        switch customer.task {
+        case .deposit:
+            DispatchQueue.global().async(group: group) {
+                depositSemaphore.wait()
+                BankClerk.depositWork(customer: customer)
+                depositSemaphore.signal()
+            }
+        case .loan:
+            DispatchQueue.global().async(group: group) {
+                loanSemaphore.wait()
+                BankClerk.loanWork(customer: customer)
+                loanSemaphore.signal()
+            }
+        }
     }
     
     private mutating func printCloseMessage() {
