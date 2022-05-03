@@ -9,9 +9,9 @@ struct Bank {
     private enum Constant {
         static let customerRange = 1...Int.random(in: 10...30)
         static let empty = ""
+        static let depositClerkCount = 2
+        static let loanClerkCount = 1
     }
-    
-    private let bankClerk = BankClerk()
     private var customerQueue = Queue<Customer>()
     private var totalCustomerCount = Int.zero
     private var workingTime = Constant.empty
@@ -26,18 +26,37 @@ struct Bank {
     }
     
     private mutating func sendCustomerToClerk() {
+        let group = DispatchGroup()
+        let depositSemaphore = DispatchSemaphore(value: Constant.depositClerkCount)
+        let loanSemaphore = DispatchSemaphore(value: Constant.loanClerkCount)
         while !customerQueue.isEmpty {
+            
             guard let customer = customerQueue.dequeue() else {
                 return
             }
             
-            bankClerk.depositWork(customer: customer)
+            switch customer.task {
+            case .deposit:
+                DispatchQueue.global().async(group: group) {
+                    depositSemaphore.wait()
+                    BankClerk.depositWork(customer: customer)
+                    depositSemaphore.signal()
+                }
+            case .loan:
+                DispatchQueue.global().async(group: group) {
+                    loanSemaphore.wait()
+                    BankClerk.loanWork(customer: customer)
+                    loanSemaphore.signal()
+                }
+            }
             totalCustomerCount += 1
         }
+        group.wait()
     }
     
-    private func printCloseMessage() {
+    private mutating func printCloseMessage() {
         print("업무가 마감되었습니다. 오늘 업무를 처리한 고객은 총 \(totalCustomerCount)명이며, 총 업무시간은 \(workingTime)초입니다.")
+        totalCustomerCount = Int.zero
     }
     
     mutating func openBank() {
