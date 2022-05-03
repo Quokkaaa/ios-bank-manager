@@ -6,6 +6,28 @@
 import Foundation
 
 struct Bank {
+    enum Task: CaseIterable {
+        case deposit
+        case loan
+        
+        var clerkCount: Int {
+            switch self {
+            case .deposit:
+                return 2
+            case .loan:
+                return 1
+            }
+        }
+        
+        var title: String {
+            switch self {
+            case .deposit:
+                return "예금"
+            case .loan:
+                return "대출"
+            }
+        }
+    }
     private enum Constant {
         static let customerRange = 1...Int.random(in: 10...30)
         static let empty = ""
@@ -44,13 +66,13 @@ struct Bank {
         case .deposit:
             DispatchQueue.global().async(group: group) {
                 depositSemaphore.wait()
-                BankClerk.depositWork(customer: customer)
+                BankClerk.startDepositWork(customer: customer)
                 depositSemaphore.signal()
             }
         case .loan:
             DispatchQueue.global().async(group: group) {
                 loanSemaphore.wait()
-                BankClerk.loanWork(customer: customer)
+                BankClerk.startLoanWork(customer: customer)
                 loanSemaphore.signal()
             }
         }

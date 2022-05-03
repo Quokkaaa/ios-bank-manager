@@ -6,24 +6,17 @@
 //
 import Foundation
 
-struct BankClerk {
-    private enum Constant {
-        static let (depositStartText, loanStartText) = ("번 고객 예금 업무 시작", "번 고객 대출 업무 시작")
-        static let (depositEndText, loanEndText) = ("번 고객 예금 업무 완료", "번 고객 대출 업무 완료")
-        static let depositWorkTime = 0.7
-        static let loanWorkTime = 1.1
+enum BankClerk {
+    static func startDepositWork(customer: Customer) {
+        print("\(customer.number)번 고객 \(customer.task.title)업무 시작")
+        Thread.sleep(forTimeInterval: 0.7)
+        print("\(customer.number)번 고객 \(customer.task.title)업무 완료")
     }
     
-    static func depositWork(customer: Customer) {
-        print("\(customer.number) \(Constant.depositStartText)")
-        Thread.sleep(forTimeInterval: Constant.depositWorkTime)
-        print("\(customer.number) \(Constant.depositEndText)")
-    }
-    
-    static func loanWork(customer: Customer) {
-        print("\(customer.number) \(Constant.loanStartText)")
-        Thread.sleep(forTimeInterval: Constant.loanWorkTime)
-        print("\(customer.number) \(Constant.loanEndText)")
+    static func startLoanWork(customer: Customer) {
+        print("\(customer.number)번 고객 \(customer.task.title)업무 시작")
+        Thread.sleep(forTimeInterval: 1.1)
+        print("\(customer.number)번 고객 \(customer.task.title)업무 완료")
     }
 }
 
