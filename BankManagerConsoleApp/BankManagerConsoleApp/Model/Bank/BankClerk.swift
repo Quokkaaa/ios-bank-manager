@@ -14,13 +14,13 @@ struct BankClerk {
         static let loanWorkTime = 1.1
     }
     
-    func depositWork(customer: Customer) {
+    static func depositWork(customer: Customer) {
         print("\(customer.number) \(Constant.depositStartText)")
         Thread.sleep(forTimeInterval: Constant.depositWorkTime)
         print("\(customer.number) \(Constant.depositEndText)")
     }
     
-    func loanWork(customer: Customer) {
+    static func loanWork(customer: Customer) {
         print("\(customer.number) \(Constant.loanStartText)")
         Thread.sleep(forTimeInterval: Constant.loanWorkTime)
         print("\(customer.number) \(Constant.loanEndText)")
