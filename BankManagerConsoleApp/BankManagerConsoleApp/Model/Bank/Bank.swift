@@ -29,7 +29,6 @@ struct Bank {
         }
     }
     private enum Constant {
-        static let customerRange = 1...Int.random(in: 10...30)
         static let empty = ""
     }
     private var customerQueue = Queue<Customer>()
@@ -39,47 +38,53 @@ struct Bank {
     private let depositSemaphore = DispatchSemaphore(value: Task.deposit.clerkCount)
     private let loanSemaphore = DispatchSemaphore(value: Task.loan.clerkCount)
     
+    weak var delegate: BankDelegate?
+    
     private mutating func receiveCustomer() {
-        for number in Constant.customerRange {
+        for _ in 1...10 {
             guard let task = Task.allCases.randomElement() else {
                 return
             }
-            customerQueue.enqueue(newElement: Customer(number: number, task: task))
+            totalCustomerCount += 1
+            let customer = Customer(number: totalCustomerCount, task: task)
+            customerQueue.enqueue(newElement: customer)
+            delegate?.addCustomer(customer: customer)
         }
     }
     
     private mutating func sendCustomerToClerk() {
         let group = DispatchGroup()
+        let workQueue = DispatchQueue(label: "queue", attributes: .concurrent)
         while !customerQueue.isEmpty {
             guard let customer = customerQueue.dequeue() else {
                 return
             }
-            matchToClerk(customer: customer, group: group)
-            totalCustomerCount += 1
+            matchToClerk(customer: customer, group: group, queue: workQueue)
         }
-        group.wait()
+        group.notify(queue: workQueue) {
+            print("끝났다!")
+        }
     }
     
-    private func matchToClerk(customer: Customer, group: DispatchGroup) {
+    private func matchToClerk(customer: Customer, group: DispatchGroup, queue: DispatchQueue) {
         switch customer.task {
         case .deposit:
-            DispatchQueue.global().async(group: group) {
+            queue.async(group: group) {
                 depositSemaphore.wait()
+                delegate?.sendTaskingCustomer(customer: customer)
                 BankClerk.startDepositWork(customer: customer)
+                delegate?.sendEndCustomer(customer: customer)
                 depositSemaphore.signal()
             }
         case .loan:
-            DispatchQueue.global().async(group: group) {
+            queue.async(group: group) {
                 loanSemaphore.wait()
+                delegate?.sendTaskingCustomer(customer: customer)
                 BankClerk.startLoanWork(customer: customer)
+                delegate?.sendEndCustomer(customer: customer)
                 loanSemaphore.signal()
             }
         }
-    }
-    
-    private mutating func printCloseMessage() {
-        print("업무가 마감되었습니다. 오늘 업무를 처리한 고객은 총 \(totalCustomerCount)명이며, 총 업무시간은 \(workingTime)초입니다.")
-        totalCustomerCount = Int.zero
     }
     
     func timeCheck(_ block: () -> Void) -> String {
@@ -88,12 +93,22 @@ struct Bank {
         let durationTime = CFAbsoluteTimeGetCurrent() - startTime
         return String(format: "%.2f", durationTime)
     }
-    
-    mutating func openBank() {
+
+    mutating func newOpen() {
         receiveCustomer()
-        workingTime = timeCheck {
-            sendCustomerToClerk()
-        }
-        printCloseMessage()
+        sendCustomerToClerk()
     }
+    
+    mutating func resetWork() {
+        customerQueue.clear()
+        totalCustomerCount = Int.zero
+        workingTime = Constant.empty
+    }
+}
+
+protocol BankDelegate: AnyObject {
+    func addCustomer(customer: Customer)
+    func sendTaskingCustomer(customer: Customer)
+    func sendEndCustomer(customer: Customer)
+//    func sendNoCustomer()
 }
