@@ -62,7 +62,6 @@ struct Bank {
             matchToClerk(customer: customer, group: group, queue: workQueue)
         }
         group.notify(queue: workQueue) { [self] in
-            print("끝")
             delegate?.sendFinishWork()
         }
     }
@@ -86,13 +85,6 @@ struct Bank {
                 loanSemaphore.signal()
             }
         }
-    }
-    
-    func timeCheck(_ block: () -> Void) -> String {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        block()
-        let durationTime = CFAbsoluteTimeGetCurrent() - startTime
-        return String(format: "%.2f", durationTime)
     }
 
     mutating func newOpen() {
