@@ -61,8 +61,9 @@ struct Bank {
             }
             matchToClerk(customer: customer, group: group, queue: workQueue)
         }
-        group.notify(queue: workQueue) {
-            print("끝났다!")
+        group.notify(queue: workQueue) { [self] in
+            print("끝")
+            delegate?.sendFinishWork()
         }
     }
     
@@ -110,5 +111,5 @@ protocol BankDelegate: AnyObject {
     func addCustomer(customer: Customer)
     func sendTaskingCustomer(customer: Customer)
     func sendEndCustomer(customer: Customer)
-//    func sendNoCustomer()
+    func sendFinishWork()
 }

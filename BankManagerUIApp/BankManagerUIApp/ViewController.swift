@@ -10,10 +10,15 @@ final class ViewController: UIViewController {
     private lazy var bankView = BankView(frame: view.bounds)
     private var bank = Bank()
     
+    var timer = Timer()
+    var isPlay = false
+    var counter = 0.00
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view = bankView
         setButtons()
+        bankView.timerLabel.text = String(counter)
     }
     
     private func setButtons() {
@@ -24,7 +29,20 @@ final class ViewController: UIViewController {
     @objc private func touchAddCustomerButton() {
         bank.delegate = self
         bank.newOpen()
-        
+  
+    }
+    
+    func startTimer() {
+        if isPlay {
+            return
+        }
+        isPlay = true
+        timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+    }
+    
+    @objc func updateTime() {
+        counter += 0.01
+        bankView.timerLabel.text = String(format: "%.2f", counter)
     }
     
     @objc private func touchResetButton() {
@@ -46,6 +64,7 @@ extension ViewController: BankDelegate {
     
     func sendTaskingCustomer(customer: Customer) {
         DispatchQueue.main.async {
+            self.startTimer()
             self.bankView.waitingStackView.arrangedSubviews.forEach {
                 let label = $0 as? UILabel
                 if label?.text == "\(customer.number) - \(customer.task.title)" {
@@ -65,5 +84,9 @@ extension ViewController: BankDelegate {
                 }
             })
         }
+    }
+    func sendFinishWork() {
+        isPlay = false
+        timer.invalidate()
     }
 }
